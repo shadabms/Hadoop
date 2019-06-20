@@ -1,39 +1,55 @@
-# Install Java
+************************************************************************
+                        Single Node
+************************************************************************
+First create an instance of t2.medium 
+(Don't select ubuntu sql)
+In security group select default security group
+After creating instance go into the security group and click on default 
+Then select inbount then click on Edit thenin source select my IP
+
+******Install Java*********
 sudo apt-get update
 sudo apt install default-jdk -y
 java -version
 
-#Create a Hadoop user for accessing HDFS and MapReduce
+*****Create a Hadoop user for accessing HDFS and MapReduce*******
 sudo addgroup hadoop
 sudo adduser hduser --ingroup hadoop 
 sudo adduser hduser sudo
 sudo su hduser
 
-#Install SSH
+******Install SSH*******
 sudo apt-get install openssh-server -y
 
-#Configure SSH
+******Configure SSH*******
+We have to make password less ssh
 ssh-keygen
 cd .ssh
 cat id_rsa.pub >> authorized_keys
 ssh localhost
+To see the impact type ssh it will show you exit localhost
 
-#Disable IPV6
+*****Disable IPV6********
 sudo nano /etc/sysctl.conf
+copy these line and past it to last
+
 net.ipv6.conf.all.disable_ipv6 = 1
 net.ipv6.conf.default.disable_ipv6 = 1
 net.ipv6.conf.lo.disable_ipv6 = 1
+
 sudo sysctl -p
 
-#Download Hadoop
+*****Download Hadoop********
 wget -c https://www-us.apache.org/dist/hadoop/common/hadoop-2.9.2/hadoop-2.9.2.tar.gz
 
-#Extract and Install Hadoop tar ball
+*****Extract and Install Hadoop tar ball*********
 tar -xzvf hadoop-2.9.2.tar.gz
 sudo mv hadoop-2.9.2 /usr/local/hadoop
 sudo chown hduser:hadoop -R /usr/local/hadoop
 
-# Set Enviornment Variable
+*******Set Enviornment Variable********
+(To set path for Hadoop commands)
+
 readlink -f $(which java)
 nano ~/.bashrc
 
@@ -48,19 +64,23 @@ export HADOOP_HDFS_HOME=$HADOOP_HOME
 export YARN_HOME=$HADOOP_HOME
 export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
 
+To refresh the bash and it take changes
 source ~/.bashrc
 
 cd /usr/local/hadoop/etc/hadoop/
 
-#Update hadoop-env.sh
-nano hadoop-env.sh
+*******Update hadoop-env.sh********
+sudo nano hadoop-env.sh
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 export HADOOP_LOG_DIR=/var/log/hadoop
+
 sudo mkdir /var/log/hadoop
 sudo chown hduser:hadoop -R /var/log/hadoop
 
-#Update core-site.xml
+****Update core-site.xml****
+(cluster wide confugaration, any change made in it will effect on whole cluster)
 nano core-site.xml
+Put this code inder ther <configuration> and </configuration> at the end of page
 <property>
   <name>hadoop.tmp.dir</name>
   <value>/app/hadoop/tmp</value>
@@ -75,66 +95,71 @@ sudo mkdir -p /app/hadoop/tmp
 sudo chown hduser:hadoop /app/hadoop/tmp
 
 
-#Update mapred-site.xml
+*****Update mapred-site.xml*******
+(MapReduce is Application framwork)
 cp mapred-site.xml.template mapred-site.xml
+
 nano mapred-site.xml
 <property>
   <name>mapreduce.jobtracker.address</name>
   <value>localhost:54311</value>
-   </property>
+</property>
 <property>
    <name>mapreduce.framework.name</name>
    <value>yarn</value>
- </property>
+</property>
 
 
-#Update hdfs-site.xml
+*******Update hdfs-site.xml***********
+(configurations which are specific to dhfs services)
+
 sudo mkdir -p /usr/local/hadoop_store/hdfs/namenode
 sudo mkdir -p /usr/local/hadoop_store/hdfs/datanode
 sudo chown -R hduser:hadoop /usr/local/hadoop_store
+
 nano hdfs-site.xml
+
 <property> 
 <name>dfs.replication</name>
   <value>1</value>
- </property>
- <property>
+</property>
+<property>
    <name>dfs.namenode.name.dir</name>
    <value>file:/usr/local/hadoop_store/hdfs/namenode</value>
- </property>
- <property>
+</property>
+<property>
    <name>dfs.datanode.data.dir</name>
    <value>file:/usr/local/hadoop_store/hdfs/datanode</value>
- </property>
+</property>
 
-
-#Update yarn-site.xml
+******Update yarn-site.xml*********
 nano yarn-site.xml
 <property>
       <name>yarn.nodemanager.aux-services</name>
       <value>mapreduce_shuffle</value>
-   </property>
+</property>
 
 
-#Format Namenode
+********Format Namenode*******
 hdfs namenode -format
 
 start-all.sh 
-or start-dfs.sh
+or 
+start-dfs.sh
 start-yarn.sh
-
 
 jps
 
-
-
 hdfs dfs -mkdir /user
-hdfs dfs -mkdir /user/ubuntu
-hdfs dfs -put --- /user/ubuntu
+hdfs dfs -mkdir /user/hduser
+hdfs dfs -put --- /user/hduser
+hdfs dfs ls /user/hduser
+
+Web UI
+(To check our data in web UI)
+publicip:50070
 
 hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-*examples*.jar pi 5 10
-
-
-
 
 <----- Troubleshooting ----->
 # if you are getting >>>  ..WARN.util.NativeCodeLoader: Unable to load native-hadoop library
@@ -142,3 +167,5 @@ Edit the bashrc file
 nano ~/.bashrc
 export HADOOP_HOME_WARN_SUPPRESS=1
 export HADOOP_ROOT_LOGGER="WARN,DRFA"
+
+******SMAS******
