@@ -2,7 +2,7 @@
                            MultiNode
 *************************************************************************************
 #First launch the instance and select the ubuntu 16 LTS.
-#Here we can use t2.micro for NameNode.
+#Here we can use at least 16 GB RAM for NameNode and at least 8 GB RAM for DataNode
 #Select the default security group.
 #Now launch the Instance
 # Connect To the DataCenter with Public Key or Private in case of windows through Putty.
